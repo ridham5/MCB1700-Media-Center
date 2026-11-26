@@ -9,7 +9,7 @@
 ![USB](https://img.shields.io/badge/USB-Audio%20Class-555)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
-![The media center running on the Keil MCB1700 board](docs/img/board-menu.jpg)
+![The media center running on the Keil MCB1700 board](docs/img/board.jpg)
 
 Everything runs on a 100 MHz microcontroller with 64 KB of RAM. There's no operating system, frame buffer or graphics library: just a 320×240 SPI LCD, a 5-way joystick, a potentiometer and a speaker. The project is a single firmware image with a joystick-driven menu and four apps.
 
@@ -17,18 +17,19 @@ Everything runs on a 100 MHz microcontroller with 64 KB of RAM. There's no opera
 
 | | |
 |---|---|
-| ![Photo gallery on the board](docs/img/board-gallery-sunset.jpg) | ![USB audio player on the board](docs/img/board-mp3.jpg) |
+| ![Photo gallery on the board](docs/img/screen-gallery-sunset.jpg) | ![USB audio player on the board](docs/img/screen-mp3.jpg) |
 | **Photo gallery**: RGB565 images stored in flash, streamed to the LCD one row at a time | **USB audio player**: the board shows up on the PC as a USB speaker ("NXP LPC17xx Speaker"); the knob sets the volume |
-| ![Tetris on the board](docs/img/board-tetris.jpg) | ![Snake on the board](docs/img/board-snake-gameover.jpg) |
+| ![Tetris on the board](docs/img/screen-tetris.jpg) | ![Snake on the board](docs/img/screen-snake-gameover.jpg) |
 | **Tetris**: rotation, wall collision, line clears, scoring and levels that speed up | **Snake**: grows on each apple and gets faster as the score climbs |
 
 <details>
-<summary>All four gallery photos on the LCD</summary>
+<summary>More screens from the board</summary>
 
 | | |
 |---|---|
-| ![Sunset](docs/img/board-gallery-sunset.jpg) | ![Mountains](docs/img/board-gallery-mountains.jpg) |
-| ![City](docs/img/board-gallery-city.jpg) | ![Ocean](docs/img/board-gallery-ocean.jpg) |
+| ![Sunset](docs/img/screen-gallery-sunset.jpg) | ![Mountains](docs/img/screen-gallery-mountains.jpg) |
+| ![City](docs/img/screen-gallery-city.jpg) | ![Ocean](docs/img/screen-gallery-ocean.jpg) |
+| ![Main menu](docs/img/screen-menu.jpg) | ![Tetris game over](docs/img/screen-tetris-gameover.jpg) |
 
 </details>
 
