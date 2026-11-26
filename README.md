@@ -40,6 +40,16 @@ Everything runs on a 100 MHz microcontroller with 64 KB of RAM. There's no opera
 
 </details>
 
+## By the numbers
+
+| | |
+|---|---|
+| Flash used | 172 KB of 512 KB (150 KB of it is the four photos; code about 22 KB) |
+| RAM used | about 3 KB of 64 KB, including the stack (no frame buffer, no heap) |
+| Audio | 32 kHz, 16-bit samples to a 10-bit DAC, one sample every 31.25 µs |
+| Time base | 1 ms SysTick |
+| Project code | about 480 lines of C, plus the USB stack and board drivers |
+
 ## Highlights
 
 - **Bare-metal C on a Cortex-M3.** A 1 ms SysTick time base drives every timer, debounce and game tick. No RTOS, no heap, no dynamic allocation.
