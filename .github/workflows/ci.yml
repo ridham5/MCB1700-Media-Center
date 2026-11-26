@@ -1,0 +1,18 @@
+name: tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  host-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and run host tests
+        run: make -C host test
+      - name: Check the firmware compiles as C89 with every option on
+        run: |
+          for f in main gallery tetris snake audio highscore profile; do
+            gcc -std=c89 -pedantic -Wall -Werror -Wno-long-long -Ihost/stubs -Isrc -DPROFILE -DHIGHSCORES -fsyntax-only src/$f.c
+          done

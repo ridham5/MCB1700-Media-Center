@@ -1,4 +1,7 @@
 #include "common.h"
+#ifdef HIGHSCORES
+#include "highscore.h"
+#endif
 
 #define BW 10
 #define BH 20
@@ -59,13 +62,17 @@ static void draw_board(void) {
 }
 
 static void draw_stats(void) {
-  char buf[12];
+  char buf[16];
   sprintf(buf, "%-7lu", (unsigned long)score);
   text(3, 10, 1, White, Black, buf);
   sprintf(buf, "%-7lu", (unsigned long)lines);
   text(5, 10, 1, White, Black, buf);
   sprintf(buf, "%-7lu", (unsigned long)level + 1);
   text(7, 10, 1, White, Black, buf);
+#ifdef HIGHSCORES
+  sprintf(buf, "Best %-4lu", (unsigned long)hs_get(HS_TETRIS));
+  text(8, 10, 1, Yellow, Black, buf);
+#endif
 }
 
 static int try_move(int dx, int dy, int dr) {
@@ -167,6 +174,9 @@ void tetris_run(void) {
   fill_rect(X0, Y0 + 80, BW * CS, 60, Black);
   text(4, 2, 1, Red, Black, "GAME");
   text(5, 2, 1, Red, Black, "OVER");
+#ifdef HIGHSCORES
+  if (hs_submit(HS_TETRIS, score)) text(7, 1, 1, Yellow, Black, "NEW BEST");
+#endif
   text(9, 10, 1, White, Black, "SEL=menu");
   while (!(joy_pressed() & KBD_SELECT)) delay_ms(20);
 }

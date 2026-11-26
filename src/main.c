@@ -68,6 +68,9 @@ static void draw_menu(int sel) {
 
 extern uint32_t SystemFrequency;
 extern void SystemClockUpdate(void);
+#ifdef PROFILE
+void profile_run(void);
+#endif
 
 int main(void) {
   int sel = 0;
@@ -78,6 +81,9 @@ int main(void) {
   LED_Init();
   KBD_Init();
   GLCD_Init();
+#ifdef PROFILE
+  profile_run();
+#endif
 
   draw_menu(sel);
   while (1) {

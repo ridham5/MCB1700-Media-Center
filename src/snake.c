@@ -1,4 +1,7 @@
 #include "common.h"
+#ifdef HIGHSCORES
+#include "highscore.h"
+#endif
 
 #define CS 16
 #define COLS 20
@@ -26,8 +29,12 @@ static void place_food(void) {
 }
 
 static void draw_score(void) {
-  char buf[40];
+  char buf[64];
+#ifdef HIGHSCORES
+  sprintf(buf, "SNAKE  Score: %-5lu Best: %-5lu SELECT=quit", (unsigned long)score, (unsigned long)hs_get(HS_SNAKE));
+#else
   sprintf(buf, "SNAKE   Score: %-5lu  SELECT=quit", (unsigned long)score);
+#endif
   text(0, 1, 0, Yellow, DarkGrey, buf);
 }
 
@@ -80,6 +87,9 @@ void snake_run(void) {
   }
 
   text(4, 5, 1, Red, Black, "GAME OVER");
+#ifdef HIGHSCORES
+  if (hs_submit(HS_SNAKE, score)) text(8, 5, 1, Yellow, Black, "NEW BEST!");
+#endif
   text(6, 3, 1, White, Black, "SELECT = menu");
   while (!(joy_pressed() & KBD_SELECT)) delay_ms(20);
 }

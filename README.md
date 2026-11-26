@@ -8,8 +8,11 @@
 ![IDE](https://img.shields.io/badge/IDE-Keil%20%C2%B5Vision-1E5BA8)
 ![USB](https://img.shields.io/badge/USB-Audio%20Class-555)
 ![License](https://img.shields.io/badge/license-MIT-green)
+[![tests](https://github.com/ridham5/mcb1700-media-center/actions/workflows/ci.yml/badge.svg)](https://github.com/ridham5/mcb1700-media-center/actions/workflows/ci.yml)
 
-![The media center running on the Keil MCB1700 board](docs/img/board.jpg)
+| The board | The same firmware in the host simulator |
+|---|---|
+| ![The media center running on the Keil MCB1700 board](docs/img/board.jpg) | ![The unmodified firmware running in the host simulator, with bots playing the games](docs/img/sim-demo.gif) |
 
 Everything runs on a 100 MHz microcontroller with 64 KB of RAM. There's no operating system, frame buffer or graphics library: just a 320×240 SPI LCD, a 5-way joystick, a potentiometer and a speaker. The project is a single firmware image with a joystick-driven menu and four apps.
 
@@ -57,6 +60,33 @@ Everything runs on a 100 MHz microcontroller with 64 KB of RAM. There's no opera
 - **Compact Tetris engine.** Each of the 7 tetrominoes stores its 4 rotations as 16-bit masks of a 4×4 grid; one `fits()` check handles walls, floor and stacked blocks for moves and rotations alike. Scoring follows the classic 40 / 100 / 300 / 1200 table times the level.
 - **USB Audio Class streaming.** Audio comes from the PC over USB isochronous transfers into a ring buffer; a timer interrupt fires every 31.25 µs (32 kHz) and writes one sample to the 10-bit DAC, and the ADC reads the potentiometer for volume. Leaving the player disconnects USB and stops the interrupts so the audio stops cleanly and can be re-entered.
 - **Image pipeline.** `tools/img2c.py` turns any JPG or PNG into an RGB565 C array, the same format as GIMP's "C source" export, so new photos drop straight into the gallery.
+
+## Testing without the board
+
+The game and UI code is tested on a normal computer. `host/` swaps the board's drivers for fakes: a 320×240 framebuffer for the LCD, scripted joystick input, and a `SIGALRM` timer that plays the part of SysTick. The firmware files in `src/` compile **unchanged**, and CI runs the tests on every push.
+
+```bash
+make -C host test
+```
+
+| Test file | What it checks |
+|---|---|
+| `test_input.c` | joystick edge detection (a held button counts once), repeatable random numbers, rectangle fills, the 1 ms delay |
+| `test_tetris.c` | all 28 piece rotations, wall/floor/stack collisions, line clears and the 40/100/300/1200 scoring, levels, locking, plus a full game played by a bot that has to clear lines |
+| `test_snake.c` | hitting walls, no reversing into itself, apples never spawn on the body, and a bot game where the snake must grow one cell per apple |
+| `test_gallery.c` | every photo reaches the screen pixel-for-pixel, upright and not mirrored (the fake LCD copies the real driver's bottom-up bitmap order), and LEFT/RIGHT wrap around |
+| `test_highscore.c` | best scores stored in a 256-byte flash page: blank flash reads as zero, only a higher score triggers a write, scores survive a reboot, a finished game records its score |
+
+`make -C host gif FONTS=<path to the LCD_Blinky example>` renders the firmware in the simulator and rebuilds the animation above.
+
+## Optional build flags
+
+| Flag | Add these files | What it does |
+|---|---|---|
+| `HIGHSCORES` | `highscore.c`, `iap_flash.c` | Keeps the best Tetris and Snake scores in the last flash sector using the LPC1768's IAP routines (prepare, erase, copy 256 bytes), so they survive power-off. Shows "Best" in each game and "NEW BEST" on game over. |
+| `PROFILE` | `profile.c` | At boot, times common drawing operations with the Cortex-M3 DWT cycle counter and shows the results in microseconds before the menu. |
+
+Both flags are tested in the simulator; the demo build leaves them off.
 
 ## Hardware
 
@@ -118,8 +148,16 @@ src/
   tetris.c      Tetris engine and renderer
   snake.c       Snake engine and renderer
   photo1-4.c    RGB565 images (160×120)
+  highscore.c   best scores, saved through a small flash interface (HIGHSCORES)
+  iap_flash.c   that flash interface on the LPC1768, using IAP (HIGHSCORES)
+  profile.c     DWT cycle-counter timings at boot (PROFILE)
+host/
+  fake_hw.c     fake LCD, joystick, LEDs and SysTick for running the firmware on a PC
+  test_*.c      unit and gameplay tests
+  sim.c         renders the firmware to frames for the demo animation
 tools/
   img2c.py      JPG/PNG to RGB565 C array converter
+  make_gif.py   turns simulator frames into a GIF
 docs/img/       screenshots and source images
 ```
 
@@ -143,7 +181,7 @@ python tools/img2c.py my_picture.jpg photo1 --flip   # mirrored, if your LCD dra
 
 ## Built with
 
-C (C89), Keil µVision 5 and the ARM compiler, CMSIS, Python and Pillow for the image tool.
+C (C89), Keil µVision 5 and the ARM compiler, CMSIS; GCC, Make and GitHub Actions for the host tests; Python and Pillow for the image tools.
 
 ---
 

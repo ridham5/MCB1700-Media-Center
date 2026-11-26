@@ -14,3 +14,9 @@
 Objects/
 Listings/
 DebugConfig/
+host/test_*
+!host/test_*.c
+host/sim_*
+!host/sim.c
+host/*.o
+host/*.raw
