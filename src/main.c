@@ -66,12 +66,15 @@ static void draw_menu(int sel) {
   LED_Out(1 << sel);
 }
 
+extern uint32_t SystemFrequency;
+extern void SystemClockUpdate(void);
+
 int main(void) {
   int sel = 0;
   uint32_t k;
 
-  SystemCoreClockUpdate();
-  SysTick_Config(SystemCoreClock / 1000);
+  SystemClockUpdate();
+  SysTick_Config(SystemFrequency / 1000);
   LED_Init();
   KBD_Init();
   GLCD_Init();
