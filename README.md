@@ -10,19 +10,20 @@
 ![License](https://img.shields.io/badge/license-MIT-green)
 [![tests](https://github.com/ridham5/mcb1700-media-center/actions/workflows/ci.yml/badge.svg)](https://github.com/ridham5/mcb1700-media-center/actions/workflows/ci.yml)
 
-| The board | The same firmware in the host simulator |
-|---|---|
-| ![The media center running on the Keil MCB1700 board](docs/img/board.jpg) | ![The unmodified firmware running in the host simulator, with bots playing the games](docs/img/sim-demo.gif) |
+<p align="center"><img src="docs/img/sim-demo.gif" width="640" alt="The firmware running: menu, photo gallery, Tetris and Snake (played by bots), MP3 player"></p>
+<p align="center"><sub>The unmodified firmware running in the host simulator, with bots playing the games.</sub></p>
 
 Everything runs on a 100 MHz microcontroller with 64 KB of RAM. There's no operating system, frame buffer or graphics library: just a 320×240 SPI LCD, a 5-way joystick, a potentiometer and a speaker. The project is a single firmware image with a joystick-driven menu and four apps.
 
 ## On the hardware
 
+<p align="center"><img src="docs/img/board.jpg" width="480" alt="The media center running on the Keil MCB1700 board"></p>
+
 | | |
 |---|---|
-| ![Photo gallery on the board](docs/img/screen-gallery-sunset.jpg) | ![USB audio player on the board](docs/img/screen-mp3.jpg) |
+| ![Photo gallery on the board](docs/img/lcd-gallery-sunset.jpg) | ![USB audio player on the board](docs/img/lcd-mp3.jpg) |
 | **Photo gallery**: RGB565 images stored in flash, streamed to the LCD one row at a time | **USB audio player**: the board shows up on the PC as a USB speaker ("NXP LPC17xx Speaker"); the knob sets the volume |
-| ![Tetris on the board](docs/img/screen-tetris.jpg) | ![Snake on the board](docs/img/screen-snake-gameover.jpg) |
+| ![Tetris on the board](docs/img/lcd-tetris.jpg) | ![Snake on the board](docs/img/lcd-snake.jpg) |
 | **Tetris**: rotation, wall collision, line clears, scoring and levels that speed up | **Snake**: grows on each apple and gets faster as the score climbs |
 
 <details>
@@ -30,9 +31,9 @@ Everything runs on a 100 MHz microcontroller with 64 KB of RAM. There's no opera
 
 | | |
 |---|---|
-| ![Sunset](docs/img/screen-gallery-sunset.jpg) | ![Mountains](docs/img/screen-gallery-mountains.jpg) |
-| ![City](docs/img/screen-gallery-city.jpg) | ![Ocean](docs/img/screen-gallery-ocean.jpg) |
-| ![Main menu](docs/img/screen-menu.jpg) | ![Tetris game over](docs/img/screen-tetris-gameover.jpg) |
+| ![Sunset](docs/img/lcd-gallery-sunset.jpg) | ![Mountains](docs/img/lcd-gallery-mountains.jpg) |
+| ![City](docs/img/lcd-gallery-city.jpg) | ![Ocean](docs/img/lcd-gallery-ocean.jpg) |
+| ![Main menu](docs/img/lcd-menu.jpg) | ![Tetris game over](docs/img/lcd-tetris-gameover.jpg) |
 
 </details>
 
