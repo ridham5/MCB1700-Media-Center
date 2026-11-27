@@ -17,7 +17,8 @@ Everything runs on a 100 MHz microcontroller with 64 KB of RAM. There's no opera
 
 ## On the hardware
 
-<p align="center"><img src="docs/img/board.jpg" width="480" alt="The media center running on the Keil MCB1700 board"></p>
+<p align="center"><img src="docs/img/board.jpg" width="380" alt="The media center running on the Keil MCB1700 board"> <img src="docs/img/board-demo.gif" width="400" alt="Recorded from the board's LCD: menu, gallery, Tetris, Snake and the MP3 player"></p>
+<p align="center"><sub>Right: filmed on the board (Tetris and Snake sped up).</sub></p>
 
 | | |
 |---|---|
