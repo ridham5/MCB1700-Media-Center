@@ -20,6 +20,8 @@ void rnd_seed(uint32_t s);
 uint32_t rnd(void);
 void fill_rect(int x, int y, int w, int h, uint16_t c);
 void text(int ln, int col, int big, uint16_t fg, uint16_t bg, const char *s);
+void lcd_lock(void);
+void lcd_unlock(void);
 
 void gallery_run(void);
 void audio_run(void);

@@ -87,8 +87,36 @@ make -C host test
 |---|---|---|
 | `HIGHSCORES` | `highscore.c`, `iap_flash.c` | Keeps the best Tetris and Snake scores in the last flash sector using the LPC1768's IAP routines (prepare, erase, copy 256 bytes), so they survive power-off. Shows "Best" in each game and "NEW BEST" on game over. |
 | `PROFILE` | `profile.c` | At boot, times common drawing operations with the Cortex-M3 DWT cycle counter and shows the results in microseconds before the menu. |
+| `USE_RTX` | `game_clock.c`, plus Keil RTX | Runs the firmware on the **Keil RTX** real-time OS instead of one bare-metal loop. See [RTOS build](#rtos-build-use_rtx). |
 
-Both flags are tested in the simulator; the demo build leaves them off.
+All three flags are tested in the simulator; the demo build leaves them off.
+
+## RTOS build (`USE_RTX`)
+
+With `USE_RTX`, the firmware runs as three CMSIS-RTOS threads plus `main`:
+
+| Thread | Priority | Job |
+|---|---|---|
+| `input_thread` | above normal | Samples the joystick every 10 ms and puts each new press in a message queue, so presses made while an app is busy drawing are never lost |
+| `main` | normal | The menu and the four apps, unchanged; `joy_pressed()` now reads the queue |
+| `clock_thread` | below normal | Redraws an uptime clock in the corner of the menu once a second |
+
+- **Shared LCD:** `main` and `clock_thread` both draw, so every draw goes through a mutex
+  (`lcd_lock` / `lcd_unlock`). The clock only draws while the menu is on screen; launching
+  an app clears that flag under the same mutex, so it never draws over a game.
+- **No busy waiting:** `delay_ms()` becomes `osDelay()`, so the CPU runs other threads (or
+  idles) instead of spinning.
+- **Time base:** RTX takes SysTick for its scheduler, so the 1 ms game clock that Tetris and
+  Snake use moves to TIMER1 (`game_clock.c`).
+
+**Keil setup:** in *Manage Run-Time Environment* tick **CMSIS → RTOS (API) → Keil RTX**,
+add `game_clock.c` to the project, add `USE_RTX` to *Options → C/C++ → Define*, and keep
+`OS_TICK` at 10 ms or less in `RTX_Conf_CM.c`.
+
+**Testing:** `host/rtos_host.c` implements the same CMSIS-RTOS calls on pthreads, and
+`host/test_rtos.c` runs the threaded build for real: presses made while the app is busy are
+kept, a held key counts once, two quick taps are both seen, and the clock never draws while
+an app owns the screen. (Not yet run on the board.)
 
 ## Hardware
 
@@ -143,7 +171,8 @@ flowchart LR
 
 ```
 src/
-  main.c        menu, SysTick time base, joystick edge detection, drawing helpers
+  main.c        menu, time base, joystick input, drawing helpers; RTX threads with USE_RTX
+  game_clock.c  1 ms TIMER1 game clock for the RTX build (USE_RTX)
   common.h      shared declarations
   gallery.c     photo carousel (row-by-row bitmap streaming, optional mirroring)
   audio.c       USB audio player screen, clean start and stop
@@ -155,6 +184,7 @@ src/
   profile.c     DWT cycle-counter timings at boot (PROFILE)
 host/
   fake_hw.c     fake LCD, joystick, LEDs and SysTick for running the firmware on a PC
+  rtos_host.c   CMSIS-RTOS calls on pthreads, for testing the RTX build
   test_*.c      unit and gameplay tests
   sim.c         renders the firmware to frames for the demo animation
 tools/
