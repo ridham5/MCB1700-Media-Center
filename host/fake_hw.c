@@ -153,6 +153,7 @@ HOST_DAC_TypeDef host_dac;
 int fake_usb_connected;
 void NVIC_DisableIRQ(IRQn_Type irq) { (void)irq; }
 void audio_start(void) { fake_usb_connected = 1; host_tim0.TCR = 1; }
+uint16_t PotVal;                         /* knob reading kept by Keil's usbdmain.c on the board */
 void USB_Connect(uint32_t con) { fake_usb_connected = (int)con; }
 
 __attribute__((weak)) void gallery_run(void) {}

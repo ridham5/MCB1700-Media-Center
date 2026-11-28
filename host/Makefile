@@ -14,9 +14,9 @@ test_input: test_input.c fake_hw.c $(FW)
 	$(CC) $(CFLAGS) $(INC) test_input.c fake_hw.c fw_main.o -o $@
 
 # RTX build: real threads on pthreads (rtos_host.c stands in for Keil RTX)
-test_rtos: test_rtos.c fake_hw.c rtos_host.c $(FW)
+test_rtos: test_rtos.c fake_hw.c rtos_host.c ../src/audio.c $(FW)
 	$(CC) $(CFLAGS) $(INC) -DUSE_RTX -Dmain=firmware_main -c $(FW) -o fw_main_rtx.o
-	$(CC) $(CFLAGS) $(INC) -DUSE_RTX -pthread test_rtos.c fake_hw.c rtos_host.c fw_main_rtx.o -o $@
+	$(CC) $(CFLAGS) $(INC) -DUSE_RTX -pthread test_rtos.c fake_hw.c rtos_host.c ../src/audio.c fw_main_rtx.o -o $@
 
 test_%: test_%.c fake_hw.c $(FW)
 	$(CC) $(CFLAGS) $(INC) -Dmain=firmware_main -c $(FW) -o fw_main.o

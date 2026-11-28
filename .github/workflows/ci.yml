@@ -16,3 +16,6 @@ jobs:
           for f in main gallery tetris snake audio highscore profile; do
             gcc -std=c89 -pedantic -Wall -Werror -Wno-long-long -Ihost/stubs -Isrc -DPROFILE -DHIGHSCORES -fsyntax-only src/$f.c
           done
+          for f in main audio; do
+            gcc -std=c89 -pedantic -Wall -Werror -Wno-long-long -Ihost/stubs -Isrc -DUSE_RTX -DHIGHSCORES -fsyntax-only src/$f.c
+          done

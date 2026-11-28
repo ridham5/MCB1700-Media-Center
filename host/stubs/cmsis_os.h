@@ -12,7 +12,7 @@ typedef enum {
   osPriorityAboveNormal = 1, osPriorityHigh = 2, osPriorityRealtime = 3
 } osPriority;
 
-typedef enum { osOK = 0, osEventMessage = 0x10, osEventTimeout = 0x40, osErrorResource = 0x81 } osStatus;
+typedef enum { osOK = 0, osEventSignal = 0x08, osEventMessage = 0x10, osEventTimeout = 0x40, osErrorResource = 0x81 } osStatus;
 
 #define osWaitForever 0xFFFFFFFFu
 
@@ -36,13 +36,16 @@ typedef struct host_mutex *osMutexId;
 
 typedef struct {
   osStatus status;
-  union { uint32_t v; void *p; } value;
+  union { uint32_t v; void *p; int32_t signals; } value;
 } osEvent;
 
 osStatus osKernelInitialize(void);
 osStatus osKernelStart(void);
 osThreadId osThreadCreate(const osThreadDef_t *thread_def, void *argument);
 osStatus osDelay(uint32_t millisec);
+osThreadId osThreadGetId(void);
+int32_t osSignalSet(osThreadId thread_id, int32_t signals);
+osEvent osSignalWait(int32_t signals, uint32_t millisec);
 osMessageQId osMessageCreate(const osMessageQDef_t *queue_def, osThreadId thread_id);
 osStatus osMessagePut(osMessageQId queue_id, uint32_t info, uint32_t millisec);
 osEvent osMessageGet(osMessageQId queue_id, uint32_t millisec);

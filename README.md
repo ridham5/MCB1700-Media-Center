@@ -93,15 +93,20 @@ All three flags are tested in the simulator; the demo build leaves them off.
 
 ## RTOS build (`USE_RTX`)
 
-With `USE_RTX`, the firmware runs as three CMSIS-RTOS threads plus `main`:
+With `USE_RTX`, the firmware runs as five CMSIS-RTOS threads plus `main` (the UI):
 
 | Thread | Priority | Job |
 |---|---|---|
 | `input_thread` | above normal | Samples the joystick every 10 ms and puts each new press in a message queue, so presses made while an app is busy drawing are never lost |
-| `main` | normal | The menu and the four apps, unchanged; `joy_pressed()` now reads the queue |
-| `clock_thread` | below normal | Redraws an uptime clock in the corner of the menu once a second |
+| `main` (UI) | normal | The menu, the photo gallery and the MP3 player screen; `joy_pressed()` reads the queue |
+| `game_thread` | normal | Runs Tetris or Snake when the UI sends it a signal, then signals back; the UI sleeps until then |
+| `audio_thread` | normal | Starts and stops the USB audio stream when the UI asks (the 32 kHz samples still go out in the TIMER0 interrupt) |
+| `volume_thread` | below normal | While music plays, redraws a volume bar from the knob every 100 ms, only when it moves |
+| `clock_thread` | low | Redraws an uptime clock in the corner of the menu once a second |
 
-- **Shared LCD:** `main` and `clock_thread` both draw, so every draw goes through a mutex
+- **Hand-offs with signals:** the UI sends `SIG_GO` to the game or audio thread and waits for
+  `SIG_DONE`, so only one of them owns the screen and the joystick at a time.
+- **Shared LCD:** four threads draw, so every draw goes through a mutex
   (`lcd_lock` / `lcd_unlock`). The clock only draws while the menu is on screen; launching
   an app clears that flag under the same mutex, so it never draws over a game.
 - **No busy waiting:** `delay_ms()` becomes `osDelay()`, so the CPU runs other threads (or
@@ -110,13 +115,23 @@ With `USE_RTX`, the firmware runs as three CMSIS-RTOS threads plus `main`:
   Snake use moves to TIMER1 (`game_clock.c`).
 
 **Keil setup:** in *Manage Run-Time Environment* tick **CMSIS → RTOS (API) → Keil RTX**,
-add `game_clock.c` to the project, add `USE_RTX` to *Options → C/C++ → Define*, and keep
-`OS_TICK` at 10 ms or less in `RTX_Conf_CM.c`.
+add `game_clock.c` to the project, add `USE_RTX` to *Options → C/C++ → Define*, and in
+`RTX_Conf_CM.c` (Configuration Wizard tab):
+- *Number of concurrent running user threads*: 6 or more
+- *Number of threads with user-provided stack size*: 3
+- *Total stack size [bytes] for threads with user-provided stack size*: 1792 or more
+  (game 1024, audio 512, volume 256)
+- *Timer tick value*: 10 ms or less
+
+The volume bar reads `PotVal`, the knob value that Keil's `usbdmain.c` already keeps up to date.
 
 **Testing:** `host/rtos_host.c` implements the same CMSIS-RTOS calls on pthreads, and
 `host/test_rtos.c` runs the threaded build for real: presses made while the app is busy are
-kept, a held key counts once, two quick taps are both seen, and the clock never draws while
-an app owns the screen. The RTX build has also been built in Keil and run on the board.
+kept, a held key counts once, two quick taps are both seen, the clock never draws while
+an app owns the screen, games run on the game thread while the UI waits, the audio thread
+starts and stops the stream, and the volume bar follows the knob only while music plays.
+The three-thread version ran on the board; the five-thread version has not been run on the
+board yet.
 
 ## Hardware
 

@@ -10,12 +10,15 @@ static uint32_t seed = 1;
 
 #ifdef USE_RTX
 /*
- * RTX version: three threads plus main.
+ * RTX version: five threads plus main (the UI).
  *   input_thread  (above normal): samples the joystick every 10 ms and queues each new press,
  *                                 so presses made while an app is busy drawing are never lost
- *   main          (normal):       the menu and the apps (gallery, audio, Tetris, Snake)
- *   clock_thread  (below normal): redraws the uptime clock on the menu once a second
- * The LCD is shared by main and clock_thread, so every draw goes through lcd_mutex.
+ *   main / UI     (normal):       the menu, the photo gallery and the MP3 player screen
+ *   game_thread   (normal):       runs Tetris or Snake when the UI signals it, then signals back
+ *   audio_thread  (normal):       starts and stops the USB audio stream when the UI asks
+ *   volume_thread (below normal): while music plays, draws a live volume bar from the knob
+ *   clock_thread  (low):          redraws the uptime clock on the menu once a second
+ * Every LCD draw goes through lcd_mutex, because four threads draw on the same screen.
  * RTX owns SysTick for its scheduler, so the 1 ms game clock (msTicks) runs on TIMER1.
  */
 void game_clock_init(void);              /* game_clock.c: TIMER1 -> msTicks++ every 1 ms */
@@ -62,7 +65,94 @@ static void clock_thread(void const *arg) {
     osDelay(1000);
   }
 }
-osThreadDef(clock_thread, osPriorityBelowNormal, 1, 0);
+osThreadDef(clock_thread, osPriorityLow, 1, 0);
+
+/* ---- UI <-> worker handshakes: the UI sends SIG_GO and sleeps until SIG_DONE comes back ---- */
+#define SIG_GO   0x01
+#define SIG_DONE 0x02
+
+static osThreadId ui_tid, game_tid, audio_tid;
+
+static void wait_for_worker(osThreadId worker) {
+  osSignalSet(worker, SIG_GO);
+  osSignalWait(SIG_DONE, osWaitForever);
+}
+
+/* Game thread: runs one game per request. Big stack: the games use sprintf. */
+static void (*volatile game_fn)(void);
+
+static void game_thread(void const *arg) {
+  (void)arg;
+  for (;;) {
+    osSignalWait(SIG_GO, osWaitForever);
+    game_fn();
+    osSignalSet(ui_tid, SIG_DONE);
+  }
+}
+osThreadDef(game_thread, osPriorityNormal, 1, 1024);
+
+void run_game(void (*fn)(void)) {
+  game_fn = fn;
+  wait_for_worker(game_tid);
+}
+
+/* Audio thread: owns the USB audio stream (the 32 kHz samples still go out in the TIMER0 ISR). */
+volatile int audio_playing;              /* volume_thread only draws while this is set */
+static volatile int audio_want;
+
+static void audio_thread(void const *arg) {
+  (void)arg;
+  for (;;) {
+    osSignalWait(SIG_GO, osWaitForever);
+    if (audio_want) {
+      audio_start();
+      audio_playing = 1;
+    } else {
+      lcd_lock();
+      audio_playing = 0;                 /* stop the bar before the screen changes */
+      lcd_unlock();
+      audio_stop();
+    }
+    osSignalSet(ui_tid, SIG_DONE);
+  }
+}
+osThreadDef(audio_thread, osPriorityNormal, 1, 512);
+
+void rtx_audio(int on) {
+  audio_want = on;
+  wait_for_worker(audio_tid);
+}
+
+/* Volume thread: redraws the bar only when the knob moves. PotVal is the knob reading that
+ * Keil's usbdmain.c keeps up to date (0-255). */
+extern uint16_t PotVal;
+
+void volume_update(void) {
+  static int last = -1;
+  int w;
+  lcd_lock();
+  if (audio_playing) {
+    w = PotVal > 255 ? 255 : PotVal;
+    w = w * VOL_BAR_W / 255;
+    if (w != last) {
+      fill_rect(VOL_BAR_X, VOL_BAR_Y, w, VOL_BAR_H, Green);
+      fill_rect(VOL_BAR_X + w, VOL_BAR_Y, VOL_BAR_W - w, VOL_BAR_H, DarkGrey);
+      last = w;
+    }
+  } else {
+    last = -1;                           /* draw the full bar next time music starts */
+  }
+  lcd_unlock();
+}
+
+static void volume_thread(void const *arg) {
+  (void)arg;
+  for (;;) {
+    volume_update();
+    osDelay(100);
+  }
+}
+osThreadDef(volume_thread, osPriorityBelowNormal, 1, 256);
 
 uint32_t joy_held(void) { return get_button(); }
 
@@ -90,8 +180,12 @@ void rtx_start(void) {
   key_queue = osMessageCreate(osMessageQ(key_queue), NULL);
   lcd_mutex = osMutexCreate(osMutex(lcd_mutex));
   osThreadCreate(osThread(input_thread), NULL);
+  game_tid  = osThreadCreate(osThread(game_thread), NULL);
+  audio_tid = osThreadCreate(osThread(audio_thread), NULL);
+  osThreadCreate(osThread(volume_thread), NULL);
   osThreadCreate(osThread(clock_thread), NULL);
   osKernelStart();                       /* main keeps running as the UI thread */
+  ui_tid = osThreadGetId();
 }
 
 #else
@@ -223,8 +317,13 @@ int main(void) {
       switch (sel) {
         case 0: gallery_run(); break;
         case 1: audio_run();   break;
+#ifdef USE_RTX
+        case 2: run_game(tetris_run); break;
+        case 3: run_game(snake_run);  break;
+#else
         case 2: tetris_run();  break;
         case 3: snake_run();   break;
+#endif
       }
       joy_wait_release();
       draw_menu(sel);
