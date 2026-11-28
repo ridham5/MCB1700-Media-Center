@@ -130,8 +130,7 @@ The volume bar reads `PotVal`, the knob value that Keil's `usbdmain.c` already k
 kept, a held key counts once, two quick taps are both seen, the clock never draws while
 an app owns the screen, games run on the game thread while the UI waits, the audio thread
 starts and stops the stream, and the volume bar follows the knob only while music plays.
-The three-thread version ran on the board; the five-thread version has not been run on the
-board yet.
+The five-thread build has been run on the board.
 
 ## Hardware
 
