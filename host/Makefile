@@ -2,7 +2,7 @@ CC      ?= gcc
 CFLAGS  ?= -std=c99 -Wall -Wextra -Wno-unused-parameter -Wno-unused-function -O1 -g
 INC      = -Istubs -I../src -I.
 FW       = ../src/main.c
-TESTS    = test_input test_tetris test_snake test_gallery test_highscore
+TESTS    = test_input test_tetris test_snake test_gallery test_highscore test_rtos
 
 all: test
 
@@ -12,6 +12,11 @@ test: $(TESTS)
 test_input: test_input.c fake_hw.c $(FW)
 	$(CC) $(CFLAGS) $(INC) -Dmain=firmware_main -c $(FW) -o fw_main.o
 	$(CC) $(CFLAGS) $(INC) test_input.c fake_hw.c fw_main.o -o $@
+
+# RTX build: real threads on pthreads (rtos_host.c stands in for Keil RTX)
+test_rtos: test_rtos.c fake_hw.c rtos_host.c $(FW)
+	$(CC) $(CFLAGS) $(INC) -DUSE_RTX -Dmain=firmware_main -c $(FW) -o fw_main_rtx.o
+	$(CC) $(CFLAGS) $(INC) -DUSE_RTX -pthread test_rtos.c fake_hw.c rtos_host.c fw_main_rtx.o -o $@
 
 test_%: test_%.c fake_hw.c $(FW)
 	$(CC) $(CFLAGS) $(INC) -Dmain=firmware_main -c $(FW) -o fw_main.o
