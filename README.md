@@ -116,7 +116,7 @@ add `game_clock.c` to the project, add `USE_RTX` to *Options → C/C++ → Defin
 **Testing:** `host/rtos_host.c` implements the same CMSIS-RTOS calls on pthreads, and
 `host/test_rtos.c` runs the threaded build for real: presses made while the app is busy are
 kept, a held key counts once, two quick taps are both seen, and the clock never draws while
-an app owns the screen. (Not yet run on the board.)
+an app owns the screen. The RTX build has also been built in Keil and run on the board.
 
 ## Hardware
 
